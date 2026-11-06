@@ -82,6 +82,12 @@ newly released sets; until then a brand-new set can be added by hand with a name
 3. Open the public page on your phone, claim a set to try it, then **Undo claim** in admin.
 4. Send family the link: https://lego.dirtdogcollective.com
 
+## 10. Deploy on every push (optional, done 2026-11-06)
+
+In the dashboard: the **lego-list** Worker → **Settings** → **Build** → **Connect** → GitHub →
+`Dirtdog88/Lego-list`, branch `main`, build command empty, deploy command `npm run deploy`. From then
+on every push to `main` deploys by itself; no more `git pull` + `npm run deploy` for code changes.
+
 ## After a birthday or Christmas
 
 In /admin, tap **Received** on each claimed set that arrived. A wrong or joke claim: **Undo claim**

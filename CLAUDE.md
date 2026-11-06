@@ -43,6 +43,12 @@ Cloudflare Worker (free plan) + D1 + static assets. Plain JavaScript ES modules,
   Cloudflare's servers (found 2026-11-06). Refresh with `npm run catalog` (upserts; no deletes).
 - Secrets (`ADMIN_EMAILS`, `TURNSTILE_SECRET`) live in Cloudflare, never in the repo.
 
+## Deploying
+
+Cloudflare Workers Builds watches `main` (connected 2026-11-06): every push to `main` runs
+`npm run deploy` (migrations, then the Worker), so pushing is deploying. `npm run catalog` still runs
+on Alex's computer, because it downloads from Rebrickable.
+
 ## Checks before pushing
 
 ```
