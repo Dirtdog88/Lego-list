@@ -30,7 +30,7 @@ enabled = true
 ACCESS_TEAM_DOMAIN = "restless-fire-82ff.cloudflareaccess.com"
 ACCESS_AUD = ""
 # Turnstile's site key is public (it goes to the browser). Empty = claiming is switched off.
-TURNSTILE_SITE_KEY = ""
+TURNSTILE_SITE_KEY = "0x4AAAAAAF2xgiyGa1k_KF1X"
 
 # Secrets, set in Cloudflare (never committed):
 #   ADMIN_EMAILS       who may use /admin, comma-separated
