@@ -2,7 +2,7 @@
 import { normalizeSetNum, shortNum, visibleSets, themesOf, counts } from './2026-11-06-list.js';
 
 const $ = (id) => document.getElementById(id);
-const state = { sets: [], tab: 'wishlist', search: '', theme: '', siteKey: '' };
+const state = { sets: [], tab: 'owned', search: '', theme: '', siteKey: '' };
 
 function el(tag, props = {}, ...kids) {
   const n = document.createElement(tag);
