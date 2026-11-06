@@ -28,7 +28,7 @@ enabled = true
 # Cloudflare Access for /admin: the same team as DogHaus; the AUD tag comes from the Lego list's
 # own Access application (setup guide step 5).
 ACCESS_TEAM_DOMAIN = "restless-fire-82ff.cloudflareaccess.com"
-ACCESS_AUD = ""
+ACCESS_AUD = "285af93edf3c5da1034b3be32b8a5b67ca7a6f3d66e6b09984a4a6a778069b3f"
 # Turnstile's site key is public (it goes to the browser). Empty = claiming is switched off.
 TURNSTILE_SITE_KEY = "0x4AAAAAAF2xgiyGa1k_KF1X"
 
