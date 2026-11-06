@@ -54,9 +54,17 @@ async function topTheme(id, headers, fetchImpl) {
 // Returns the set's details, or null when Rebrickable doesn't know the number.
 export async function lookupSet(setNum, env, fetchImpl = fetch) {
   if (!env.REBRICKABLE_KEY) throw new LookupError('Set lookup is not switched on yet (no Rebrickable key).', 503);
-  const headers = { Authorization: `key ${env.REBRICKABLE_KEY}`, Accept: 'application/json' };
+  const headers = {
+    Authorization: `key ${String(env.REBRICKABLE_KEY).trim()}`,
+    Accept: 'application/json',
+    'User-Agent': 'lego-list (https://lego.dirtdogcollective.com)',
+  };
   const res = await fetchImpl(`${API}/sets/${encodeURIComponent(setNum)}/`, { headers });
   if (res.status === 404) return null;
+  if (res.status === 401 || res.status === 403) {
+    console.error('Rebrickable refused the request', res.status, (await res.text()).slice(0, 200));
+    throw new LookupError(`Rebrickable refused the API key (${res.status}). Check the REBRICKABLE_KEY secret.`, 502);
+  }
   if (!res.ok) throw new LookupError(`Rebrickable answered ${res.status}. Try again in a minute.`, 502);
   const s = await res.json();
   const num = normalizeSetNum(s.set_num) ?? setNum;

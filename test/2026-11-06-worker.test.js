@@ -274,3 +274,17 @@ test('nothing anywhere stores a buyer', async () => {
   const cols = env.DB.raw.prepare('PRAGMA table_info(sets)').all().map((c) => c.name);
   assert.deepEqual(cols.filter((c) => /buyer|by|who|email|note/i.test(c)), []);
 });
+
+test('a refused Rebrickable key says so, and the key is sent trimmed with a User-Agent', async () => {
+  const env = makeEnv({ ...DEV, REBRICKABLE_KEY: ' rb-test \n' });
+  const seen = [];
+  const net = async (url, init) => {
+    seen.push(init?.headers ?? {});
+    return new Response('{"detail":"Invalid token."}', { status: 403 });
+  };
+  const r = await call(env, '/admin/api/sets', { method: 'POST', body: { set_num: '75192', status: 'wishlist' } }, net);
+  assert.equal(r.status, 502);
+  assert.match(r.data.error, /refused the API key \(403\)/);
+  assert.equal(seen[0].Authorization, 'key rb-test');
+  assert.match(seen[0]['User-Agent'], /lego-list/);
+});
