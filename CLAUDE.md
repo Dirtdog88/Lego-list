@@ -13,7 +13,8 @@ Cloudflare Worker (free plan) + D1 + static assets. Plain JavaScript ES modules,
 |---|---|
 | `src/2026-11-06-index.js` | entry: routing, security headers (CSP, noindex), same-site JSON check, /admin gate |
 | `src/2026-11-06-sets.js` | the sets: public list, claim, bought, and the admin add/update/lookup |
-| `src/2026-11-06-rebrickable.js` | set lookup (server side; key in secret `REBRICKABLE_KEY`), set number rules, image host check |
+| `src/2026-11-06-rebrickable.js` | set lookup from the `catalog` table, set number rules, image host check |
+| `scripts/2026-11-06-catalog.js`, `scripts/2026-11-06-catalog-rules.js` | `npm run catalog`: loads Rebrickable's free catalog downloads into `catalog` (rules are pure, tested) |
 | `src/2026-11-06-turnstile.js` | Turnstile check on the two public changes; fails closed |
 | `src/2026-11-06-ratelimit.js` | in-memory per-IP limit on claims (10/min), best effort |
 | `src/2026-11-06-access.js` | Cloudflare Access token check for /admin (from DogHouse), `ADMIN_EMAILS` |
@@ -38,7 +39,9 @@ Cloudflare Worker (free plan) + D1 + static assets. Plain JavaScript ES modules,
 - Deletes are soft (`deleted_at`); Removed shows the last 30 days.
 - Migrations: new numbered file, never edit an applied one; `IF NOT EXISTS`.
 - New files use dated names `YYYY-MM-DD-name.ext` (except files tools need by name).
-- Secrets (`ADMIN_EMAILS`, `TURNSTILE_SECRET`, `REBRICKABLE_KEY`) live in Cloudflare, never in the repo.
+- Set lookups read the `catalog` table, never Rebrickable's API: its bot protection blocks requests from
+  Cloudflare's servers (found 2026-11-06). Refresh with `npm run catalog` (upserts; no deletes).
+- Secrets (`ADMIN_EMAILS`, `TURNSTILE_SECRET`) live in Cloudflare, never in the repo.
 
 ## Checks before pushing
 

@@ -1,13 +1,13 @@
 # Lego list: one-time setup
 
-Everything here is free (Cloudflare Free plan, a free Rebrickable account). Run the commands in a
+Everything here is free (Cloudflare Free plan). Run the commands in a
 terminal in this repo's folder. `npx wrangler@4 login` once first if this computer hasn't signed in
 to Cloudflare before.
 
-## 1. Rebrickable key (set names and pictures)
+## 1. (Retired) Rebrickable key
 
-1. Make a free account at rebrickable.com.
-2. Profile (top right) → **Settings** → **API** → **Generate new API key**. Keep it for step 4.
+Not needed any more: set lookups use a copy of Rebrickable's free catalog (step 8), because
+Rebrickable's API blocks requests from Cloudflare's servers.
 
 ## 2. The database
 
@@ -32,7 +32,6 @@ list loads, but claiming is off and /admin says "not signed in" until steps 4 to
 ## 4. Secrets
 
 ```
-npx wrangler@4 secret put REBRICKABLE_KEY     # the key from step 1
 npx wrangler@4 secret put ADMIN_EMAILS        # your email (comma-separate more than one)
 ```
 
@@ -58,14 +57,27 @@ npx wrangler@4 secret put ADMIN_EMAILS        # your email (comma-separate more 
 Only `/admin` is locked; the list itself stays public. The worker also checks the Access sign-in
 itself, so if this step is skipped or wrong, /admin refuses everyone rather than opening up.
 
-## 7. Deploy again and fill it in
+## 7. Deploy again
 
 ```
 npm run deploy
 ```
 
+## 8. Load the set catalog
+
+```
+npm run catalog
+```
+
+This downloads Rebrickable's free catalog files (about 25,000 sets, no key needed) and loads them
+into the database, so the admin Add box and "Bought one that isn't here?" can look sets up. Answer
+`y` if it asks to proceed. Run it again now and then (before birthdays and Christmas) to pick up
+newly released sets; until then a brand-new set can be added by hand with a name.
+
+## 9. Fill it in
+
 1. Open https://lego.dirtdogcollective.com/admin, sign in, and paste his set numbers (Add to: **Has**).
-   They go in one by one; any Rebrickable doesn't know stay in the box with a note.
+   They go in one by one; any the catalog doesn't know stay in the box with a note.
 2. Add wishlist sets the same way (Add to: **Wishlist**).
 3. Open the public page on your phone, claim a set to try it, then **Undo claim** in admin.
 4. Send family the link: https://lego.dirtdogcollective.com

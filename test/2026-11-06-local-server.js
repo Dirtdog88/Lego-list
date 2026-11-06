@@ -1,5 +1,5 @@
 // Local preview: `npm run preview`, then open http://localhost:8788 (and /admin).
-// Uses a fake database with sample sets, a fake Rebrickable (the sets in helpers.js) and the
+// Uses a fake database with sample sets, a small catalog (the sets in helpers.js) and the
 // Turnstile bypass, so it works with no Cloudflare account and no network.
 import { createServer } from 'node:http';
 import { handle } from '../src/2026-11-06-index.js';
@@ -42,5 +42,5 @@ createServer(async (nodeReq, nodeRes) => {
   nodeRes.end(Buffer.from(await res.arrayBuffer()));
 }).listen(PORT, () => {
   console.log(`Lego list preview: http://localhost:${PORT}  (admin: /admin)`);
-  console.log(`Fake Rebrickable knows: ${Object.keys(RB_SETS).join(', ')}`);
+  console.log(`The sample catalog knows: ${Object.keys(RB_SETS).join(', ')}`);
 });

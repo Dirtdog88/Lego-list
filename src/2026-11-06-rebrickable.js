@@ -1,7 +1,7 @@
-// Looks a set up on Rebrickable (name, year, pieces, picture, theme). The API key stays on the
-// server (secret REBRICKABLE_KEY), so the browser never sees it.
+// Looks a set up in the `catalog` table: a copy of Rebrickable's free catalog downloads, loaded by
+// `npm run catalog` (scripts/2026-11-06-catalog.js). Since 2026-11-06 there is no call to
+// Rebrickable's API: its bot protection turns away requests from Cloudflare's servers.
 
-const API = 'https://rebrickable.com/api/v3/lego';
 const IMAGE_HOST = 'https://cdn.rebrickable.com/';
 
 export class LookupError extends Error {
@@ -18,62 +18,34 @@ export function normalizeSetNum(input) {
   return /^[0-9a-z]{1,20}-\d{1,3}$/.test(s) ? s : null;
 }
 
-// Only Rebrickable's own image host, so a bad answer can't put an arbitrary picture on the page.
+// Only Rebrickable's own image host, so a bad row can't put an arbitrary picture on the page.
 export function safeImage(url) {
   return typeof url === 'string' && url.startsWith(IMAGE_HOST) && url.length <= 500 ? url : '';
 }
 
-const themeCache = new Map(); // id -> { name, parent_id }
+const NOT_LOADED = "Set lookup isn't loaded yet. Run npm run catalog.";
 
-export function resetThemeCache() {
-  themeCache.clear();
-}
-
-async function theme(id, headers, fetchImpl) {
-  if (themeCache.has(id)) return themeCache.get(id);
-  const res = await fetchImpl(`${API}/themes/${id}/`, { headers });
-  if (!res.ok) return null;
-  const t = await res.json();
-  const out = { name: String(t.name ?? ''), parent_id: Number.isInteger(t.parent_id) ? t.parent_id : null };
-  themeCache.set(id, out);
-  return out;
-}
-
-// The top-level theme ("Star Wars", not "Ultimate Collector Series"), so the filter stays short.
-async function topTheme(id, headers, fetchImpl) {
-  let name = '';
-  for (let i = 0; i < 4 && Number.isInteger(id); i++) {
-    const t = await theme(id, headers, fetchImpl);
-    if (!t) break;
-    name = t.name;
-    id = t.parent_id;
+// Returns the set's details, or null when the catalog doesn't have the number.
+// (fetchImpl is unused, kept so callers don't change.)
+export async function lookupSet(setNum, env, _fetchImpl) {
+  let row;
+  try {
+    row = await env.DB.prepare('SELECT set_num, name, theme, year, pieces, image_url FROM catalog WHERE set_num = ?')
+      .bind(setNum).first();
+    if (!row && !(await env.DB.prepare('SELECT 1 AS one FROM catalog LIMIT 1').first())) {
+      throw new LookupError(NOT_LOADED, 503);
+    }
+  } catch (err) {
+    if (/no such table/i.test(String(err?.message))) throw new LookupError(NOT_LOADED, 503);
+    throw err;
   }
-  return name.slice(0, 100);
-}
-
-// Returns the set's details, or null when Rebrickable doesn't know the number.
-export async function lookupSet(setNum, env, fetchImpl = fetch) {
-  if (!env.REBRICKABLE_KEY) throw new LookupError('Set lookup is not switched on yet (no Rebrickable key).', 503);
-  const headers = {
-    Authorization: `key ${String(env.REBRICKABLE_KEY).trim()}`,
-    Accept: 'application/json',
-    'User-Agent': 'lego-list (https://lego.dirtdogcollective.com)',
-  };
-  const res = await fetchImpl(`${API}/sets/${encodeURIComponent(setNum)}/`, { headers });
-  if (res.status === 404) return null;
-  if (res.status === 401 || res.status === 403) {
-    console.error('Rebrickable refused the request', res.status, (await res.text()).slice(0, 200));
-    throw new LookupError(`Rebrickable refused the API key (${res.status}). Check the REBRICKABLE_KEY secret.`, 502);
-  }
-  if (!res.ok) throw new LookupError(`Rebrickable answered ${res.status}. Try again in a minute.`, 502);
-  const s = await res.json();
-  const num = normalizeSetNum(s.set_num) ?? setNum;
+  if (!row) return null;
   return {
-    set_num: num,
-    name: String(s.name ?? num).slice(0, 200),
-    year: Number.isInteger(s.year) ? s.year : null,
-    pieces: Number.isInteger(s.num_parts) ? s.num_parts : null,
-    image_url: safeImage(s.set_img_url),
-    theme: Number.isInteger(s.theme_id) ? await topTheme(s.theme_id, headers, fetchImpl) : '',
+    set_num: row.set_num,
+    name: String(row.name).slice(0, 200),
+    year: Number.isInteger(row.year) ? row.year : null,
+    pieces: Number.isInteger(row.pieces) ? row.pieces : null,
+    image_url: safeImage(row.image_url),
+    theme: String(row.theme ?? '').slice(0, 100),
   };
 }

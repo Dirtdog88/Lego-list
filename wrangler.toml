@@ -35,4 +35,3 @@ TURNSTILE_SITE_KEY = "0x4AAAAAAF2xgiyGa1k_KF1X"
 # Secrets, set in Cloudflare (never committed):
 #   ADMIN_EMAILS       who may use /admin, comma-separated
 #   TURNSTILE_SECRET   the Turnstile widget's secret key
-#   REBRICKABLE_KEY    the Rebrickable API key (set lookups)

@@ -11,6 +11,7 @@
     "build": "echo No build step: the app ships as-is",
     "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js",
     "preview": "node --disable-warning=ExperimentalWarning test/2026-11-06-local-server.js",
-    "deploy": "npx wrangler@4 d1 migrations apply lego-list --remote && npx wrangler@4 deploy"
+    "deploy": "npx wrangler@4 d1 migrations apply lego-list --remote && npx wrangler@4 deploy",
+    "catalog": "node scripts/2026-11-06-catalog.js"
   }
 }

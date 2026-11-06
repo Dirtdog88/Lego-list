@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join, normalize, extname } from 'node:path';
 import { fakeD1 } from './2026-11-06-fake-d1.js';
+import { topThemes, catalogRows, catalogSql } from '../scripts/2026-11-06-catalog-rules.js';
 
 const PUBLIC = fileURLToPath(new URL('../public/', import.meta.url));
 const TYPES = {
@@ -23,7 +24,7 @@ export const fakeAssets = {
   },
 };
 
-// Rebrickable sets the fake network knows. Theme 158 (Star Wars) is the parent of 171 (UCS).
+// The sets in the test catalog (shaped like Rebrickable's sets.csv rows). Theme 158 (Star Wars) is the parent of 171 (UCS).
 export const RB_SETS = {
   '75192-1': { set_num: '75192-1', name: 'Millennium Falcon', year: 2017, num_parts: 7541, theme_id: 171, set_img_url: 'https://cdn.rebrickable.com/media/sets/75192-1/1.jpg' },
   '42143-1': { set_num: '42143-1', name: 'Ferrari Daytona SP3', year: 2022, num_parts: 3778, theme_id: 1, set_img_url: 'https://cdn.rebrickable.com/media/sets/42143-1/1.jpg' },
@@ -38,20 +39,13 @@ export const RB_THEMES = {
   186: { name: 'Icons', parent_id: null },
 };
 
-// A fake network: Rebrickable, Turnstile ("good" tokens pass) and nothing else.
+// A fake network: Turnstile ("good" tokens pass) and nothing else.
 export function fakeNet() {
   const calls = [];
   const fn = async (url, init = {}) => {
     url = String(url);
     calls.push({ url, init });
     const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
-    let m = url.match(/^https:\/\/rebrickable\.com\/api\/v3\/lego\/sets\/([^/]+)\/$/);
-    if (m) {
-      const s = RB_SETS[decodeURIComponent(m[1])];
-      return s ? reply(s) : reply({ detail: 'Not found.' }, 404);
-    }
-    m = url.match(/^https:\/\/rebrickable\.com\/api\/v3\/lego\/themes\/(\d+)\/$/);
-    if (m) return RB_THEMES[m[1]] ? reply({ id: Number(m[1]), ...RB_THEMES[m[1]] }) : reply({}, 404);
     if (url === 'https://challenges.cloudflare.com/turnstile/v0/siteverify') {
       const token = new URLSearchParams(String(init.body)).get('response');
       return reply({ success: token === 'good' });
@@ -62,11 +56,19 @@ export function fakeNet() {
   return fn;
 }
 
-export function makeEnv(extra = {}) {
+// Loads RB_SETS into the catalog table the same way `npm run catalog` does.
+export function loadCatalog(db) {
+  const themes = topThemes(Object.entries(RB_THEMES).map(([id, t]) => ({ id, name: t.name, parent_id: t.parent_id ?? '' })));
+  const rows = catalogRows(Object.values(RB_SETS).map((s) => ({ ...s, img_url: s.set_img_url })), themes);
+  db.raw.exec(catalogSql(rows));
+}
+
+export function makeEnv(extra = {}, { catalog = true } = {}) {
+  const DB = fakeD1();
+  if (catalog) loadCatalog(DB);
   return {
-    DB: fakeD1(),
+    DB,
     ASSETS: fakeAssets,
-    REBRICKABLE_KEY: 'rb-test',
     TURNSTILE_SECRET: 'ts-test',
     TURNSTILE_SITE_KEY: 'site-test',
     ADMIN_EMAILS: 'admin@example.com',

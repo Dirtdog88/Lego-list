@@ -2,14 +2,13 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { handle } from '../src/2026-11-06-index.js';
 import { resetRateLimits } from '../src/2026-11-06-ratelimit.js';
-import { resetThemeCache, normalizeSetNum, safeImage } from '../src/2026-11-06-rebrickable.js';
+import { normalizeSetNum, safeImage } from '../src/2026-11-06-rebrickable.js';
 import { makeEnv, fakeNet, req, insertSet } from './2026-11-06-helpers.js';
 
 const DEV = { DEV_BYPASS: 'yes-local-only', DEV_BYPASS_EMAIL: 'admin@example.com' };
 
 beforeEach(() => {
   resetRateLimits();
-  resetThemeCache();
 });
 
 async function call(env, path, opts, net = fakeNet()) {
@@ -133,18 +132,33 @@ test('bought: owned is refused, wishlist gets claimed, unknown is 404, odd image
   assert.equal((await call(env, '/api/bought', { method: 'POST', body: { set_num: 'nope!', token: 'good' } })).status, 400);
 });
 
-test('bought: no Turnstile, no lookup', async () => {
+test('bought: no Turnstile, nothing added', async () => {
   const env = makeEnv();
-  const net = fakeNet();
-  const r = await call(env, '/api/bought', { method: 'POST', body: { set_num: '75192', token: 'bad' } }, net);
+  const r = await call(env, '/api/bought', { method: 'POST', body: { set_num: '75192', token: 'bad' } });
   assert.equal(r.status, 403);
-  assert.equal(net.calls.some((c) => c.url.includes('rebrickable')), false);
+  assert.equal((await env.DB.prepare('SELECT COUNT(*) AS n FROM sets').first()).n, 0);
 });
 
-test('bought: no Rebrickable key means a clear 503', async () => {
-  const env = makeEnv({ REBRICKABLE_KEY: '' });
-  const r = await call(env, '/api/bought', { method: 'POST', body: { set_num: '75192', token: 'good' } });
+test('lookups never call out to the network', async () => {
+  const env = makeEnv(DEV);
+  const net = fakeNet();
+  await call(env, '/api/bought', { method: 'POST', body: { set_num: '75192', token: 'good' } }, net);
+  await call(env, '/admin/api/sets', { method: 'POST', body: { set_num: '42143', status: 'owned' } }, net);
+  assert.deepEqual(net.calls.map((c) => c.url), ['https://challenges.cloudflare.com/turnstile/v0/siteverify']);
+});
+
+test('an empty catalog, or none at all, is a clear 503 (not "unknown set")', async () => {
+  const empty = makeEnv(DEV, { catalog: false });
+  const r = await call(empty, '/api/bought', { method: 'POST', body: { set_num: '75192', token: 'good' } });
   assert.equal(r.status, 503);
+  assert.match(r.data.error, /npm run catalog/);
+  const missing = makeEnv(DEV, { catalog: false });
+  missing.DB.raw.exec('DROP TABLE catalog');
+  const a = await call(missing, '/admin/api/sets', { method: 'POST', body: { set_num: '75192', status: 'owned' } });
+  assert.equal(a.status, 503);
+  // Adding by hand still works while the catalog is missing.
+  const byHand = await call(missing, '/admin/api/sets', { method: 'POST', body: { set_num: '75192', status: 'owned', name: 'Falcon' } });
+  assert.equal(byHand.status, 201);
 });
 
 // ---------- doors ----------
@@ -273,18 +287,4 @@ test('nothing anywhere stores a buyer', async () => {
   const env = makeEnv();
   const cols = env.DB.raw.prepare('PRAGMA table_info(sets)').all().map((c) => c.name);
   assert.deepEqual(cols.filter((c) => /buyer|by|who|email|note/i.test(c)), []);
-});
-
-test('a refused Rebrickable key says so, and the key is sent trimmed with a User-Agent', async () => {
-  const env = makeEnv({ ...DEV, REBRICKABLE_KEY: ' rb-test \n' });
-  const seen = [];
-  const net = async (url, init) => {
-    seen.push(init?.headers ?? {});
-    return new Response('{"detail":"Invalid token."}', { status: 403 });
-  };
-  const r = await call(env, '/admin/api/sets', { method: 'POST', body: { set_num: '75192', status: 'wishlist' } }, net);
-  assert.equal(r.status, 502);
-  assert.match(r.data.error, /refused the API key \(403\)/);
-  assert.equal(seen[0].Authorization, 'key rb-test');
-  assert.match(seen[0]['User-Agent'], /lego-list/);
 });
