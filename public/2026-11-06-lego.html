@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#f6c23e">
+  <title>Our Lego list</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/2026-11-06-lego.css">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <script src="/2026-11-06-lego.js" type="module"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <h1>Our Lego list</h1>
+      <p class="lede">What's already on the shelf, and what's on the wishlist. Getting one? Tap
+        <strong>I'm getting this</strong> so nobody buys it twice. Nobody sees who.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav class="tabs" aria-label="Lists">
+      <button type="button" class="tab" data-tab="wishlist" aria-pressed="true">Wishlist <span class="count" id="count-wishlist"></span></button>
+      <button type="button" class="tab" data-tab="owned" aria-pressed="false">Has <span class="count" id="count-owned"></span></button>
+    </nav>
+
+    <div class="filters">
+      <label class="search">
+        <span class="sr">Search</span>
+        <input type="search" id="search" placeholder="Search by name or number" autocomplete="off">
+      </label>
+      <label>
+        <span class="sr">Theme</span>
+        <select id="theme"><option value="">All themes</option></select>
+      </label>
+    </div>
+
+    <p class="status" id="status" role="status"></p>
+    <ul class="grid" id="grid"></ul>
+
+    <section class="bought">
+      <h2>Bought one that isn't here?</h2>
+      <p>Type the set number from the box (like 75192) so nobody else buys it too.</p>
+      <form id="bought-form" class="bought-row">
+        <label class="sr" for="bought-num">Set number</label>
+        <input id="bought-num" inputmode="numeric" autocomplete="off" placeholder="Set number" maxlength="24" required>
+        <button type="submit" class="btn">Mark it taken</button>
+      </form>
+      <p class="status" id="bought-status" role="status"></p>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    <p>Set details and pictures from <a href="https://rebrickable.com" rel="noopener">Rebrickable</a>.
+      LEGO® is a trademark of the LEGO Group, which doesn't sponsor this page.</p>
+  </footer>
+
+  <dialog id="confirm">
+    <form method="dialog" class="dialog">
+      <h2 id="confirm-title"></h2>
+      <p id="confirm-text"></p>
+      <div id="confirm-check" class="check"></div>
+      <p class="status" id="confirm-status" role="status"></p>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="confirm-cancel">Cancel</button>
+        <button type="button" class="btn" id="confirm-ok" disabled>Yes, I'm getting it</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

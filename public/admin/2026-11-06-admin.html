@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Lego list admin</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/2026-11-06-lego.css">
+  <link rel="stylesheet" href="/admin/2026-11-06-admin.css">
+  <script src="/admin/2026-11-06-admin.js" type="module"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <h1>Lego list admin</h1>
+      <p class="lede">Add sets, mark presents received, undo a wrong claim. <a href="/">See the public page</a></p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel">
+      <h2>Add sets</h2>
+      <form id="add-form">
+        <label for="add-nums">Set numbers, one per line (or separated by commas or spaces)</label>
+        <textarea id="add-nums" rows="4" placeholder="75192&#10;10305&#10;42143" required></textarea>
+        <div class="row">
+          <label>Add to
+            <select id="add-status">
+              <option value="owned">Has</option>
+              <option value="wishlist">Wishlist</option>
+            </select>
+          </label>
+          <button type="submit" class="btn" id="add-btn">Add</button>
+        </div>
+        <details>
+          <summary>Rebrickable doesn't know the set?</summary>
+          <p class="hint">Add one number above, then a name (and theme) here to add it by hand.</p>
+          <div class="row">
+            <label>Name <input id="add-name" maxlength="200"></label>
+            <label>Theme <input id="add-theme" maxlength="100"></label>
+          </div>
+        </details>
+      </form>
+      <ul class="log" id="add-log"></ul>
+    </section>
+
+    <p class="status" id="status" role="status"></p>
+
+    <section class="panel">
+      <h2>Claimed <span class="count" id="n-claimed"></span></h2>
+      <p class="hint">Someone is getting these. When one arrives, tap <strong>Received</strong>.</p>
+      <ul class="rows" id="list-claimed"></ul>
+    </section>
+    <section class="panel">
+      <h2>Wishlist <span class="count" id="n-wishlist"></span></h2>
+      <ul class="rows" id="list-wishlist"></ul>
+    </section>
+    <section class="panel">
+      <h2>Has <span class="count" id="n-owned"></span></h2>
+      <ul class="rows" id="list-owned"></ul>
+    </section>
+    <section class="panel">
+      <h2>Removed <span class="count" id="n-removed"></span></h2>
+      <p class="hint">Kept for 30 days in case you want one back.</p>
+      <ul class="rows" id="list-removed"></ul>
+    </section>
+  </main>
+</body>
+</html>
